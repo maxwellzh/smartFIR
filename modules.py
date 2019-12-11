@@ -210,7 +210,7 @@ class simpleagent(object):
         self.board = chessboard
 
     def policy(self):
-        return serialpolicy(self)
+        return randpolicy(self)
 
 
 def randpolicy(Agent):

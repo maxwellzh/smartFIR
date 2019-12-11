@@ -37,9 +37,8 @@ def main():
     if aifirst:
         FirstHand = chb.agent(board, loadmodel=True,
                               path='./NETA.pt', eval=True)
-        #LatterHand = chb.simpleagent(board)
-        LatterHand = chb.agent(board, loadmodel=True,
-                               path='./NETB.pt', eval=True)
+        LatterHand = chb.simpleagent(board)
+        #LatterHand = chb.agent(board, loadmodel=True, path='./NETB.pt', eval=True)
     else:
         FirstHand = chb.simpleagent(board)
         LatterHand = chb.agent(board, loadmodel=True,
@@ -55,7 +54,7 @@ def main():
         step = player.policy()
         # put chessman
         if board.put(step):
-            time.sleep(0.5)
+            time.sleep(0.1)
             continue
         else:
             i += 1
@@ -64,7 +63,7 @@ def main():
             board.reset()
             win.addstr(1, 4, ('Round:%4d AI:%4.2f%%' % (i, countwin/i*100)))
             win.refresh()
-        if i == 5:
+        if i == 10:
             break
 
     '''
