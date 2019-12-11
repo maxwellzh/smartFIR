@@ -1,6 +1,32 @@
 import random
 import curses
+import torch
+import torchvision
+import torch.nn as nn
+import torch.nn.functional as F
 
+class Net(nn.Module):
+    def __init__(self):
+        super(Net, self).__init__()
+        self.conv1 = nn.Conv2d(1, 32, 5, 1, padding=0)
+        self.bn1 = nn.BatchNorm2d(32)
+        self.conv2 = nn.Conv2d(32, 32, 3, 1)
+        self.bn2 = nn.BatchNorm2d(32)
+        self.maxpool = nn.MaxPool2d(3, 2, 1)
+        self.fc1 = nn.Linear(5 * 5 * 32, 225)
+
+    def forward(self, x):
+        x = torch.tensor(x).view(1, 1, 15, 15).float()
+        x = self.conv1(x)
+        x = F.relu(x)
+        x = self.bn1(x)
+        x = self.conv2(x)
+        x = F.relu(x)
+        x = self.bn2(x)
+        x = self.maxpool(x)
+        x = self.fc1(torch.flatten(x, 1))
+        output = F.log_softmax(x, dim=1)
+        return output
 
 def getPos(pos):
     if pos < 0 or pos > 224:
@@ -37,7 +63,7 @@ def display(win, pos, black, color=None):
 def checkrow(q, s, win):
     countwin = 0
     lastone = 0
-    for i, pos in enumerate(q):
+    for pos in q:
         if pos < 0 or pos > 224:
             continue
         if s[pos] != lastone:
@@ -46,23 +72,30 @@ def checkrow(q, s, win):
             countwin += s[pos]
         lastone = s[pos]
         if countwin == 5:
-            for j in q[i-4:i+1]:
-                display(win, j, True)
             return True
         elif countwin == -5:
-            for j in q[i-4:i+1]:
-                display(win, j, False)
             return False
     return None
 
 
 class board(object):
-    def __init__(self, win):
-        displayinfo(win, 7, 34, '▶ black ●')
-        displayinfo(win, 10, 34, '  white ◯')
+    def __init__(self, win=None):
+        if win != None:
+            displayinfo(win, 7, 34, '▶ black ●')
+            displayinfo(win, 11, 34, '  white ◯')
         self.status = [0 for _ in range(225)]
         self.turn = True    # True for black, False for white
         self.win = win
+        self.steps = []
+        self.countsteps = 0
+
+    def reset(self):
+        if self.win != None:
+            self.win.clear()
+            displayinfo(self.win, 7, 34, '▶ black ●')
+            displayinfo(self.win, 11, 34, '  white ◯')
+        self.status = [0 for _ in range(225)]
+        self.turn = True    # True for black, False for white
         self.steps = []
         self.countsteps = 0
 
@@ -87,7 +120,10 @@ class board(object):
 
     def gameover(self, pos):
         if self.countsteps == 225:
-            print("Draw.")
+            if self.win != None:
+                displayinfo(self.win, 0, 13, "Draw")
+            else:
+                print('Draw')
             return True
 
         winplayer = self.checkWin(pos)
@@ -95,45 +131,41 @@ class board(object):
         if winplayer == None:
             return False
 
-        if winplayer:
-            displayinfo(self.win, 0, 6, "Black player wins!")
-        else:
-            displayinfo(self.win, 0, 6, "White player wins!")
+        if self.win != None:
+            if winplayer:
+                displayinfo(self.win, 0, 6, "Black player wins!")
+            else:
+                displayinfo(self.win, 0, 6, "White player wins!")
+        
         return True
 
     def put(self, pos):
-        '''
-        if type(player) != bool:
-            print("Type of player should be a bool.")
-            exit(-1)
-
-        if player != self.turn:
-            if player:
-                print("It should be on the turn of white but black plays.")
-            else:
-                print("It should be on the turn of black but white plays.")
-            exit(-1)
-        '''
-
         getPos(pos)     # check if position is valid
 
         if self.status[pos] != 0:
             print("There is already a chessman at the position.")
             exit(-1)
 
-        if self.countsteps % 2 == 0:
-            self.status[pos] = 1
-            display(self.win, pos, True)
-            displayinfo(self.win, 7, 34, '▶')
-            displayinfo(self.win, 10, 34, ' ')
-        else:
-            self.status[pos] = -1
-            display(self.win, pos, False)
-            displayinfo(self.win, 7, 34, ' ')
-            displayinfo(self.win, 10, 34, '▶')
-
+        if self.win != None:
+            displayinfo(self.win, 9, 36, ('[%2d,%2d]' %
+                                        (getPos(pos)[0], getPos(pos)[1])))
+        self.turn = not self.turn
         self.steps.append(pos)
         self.countsteps += 1
+
+        if self.countsteps % 2 == 0:
+            self.status[pos] = 1
+            if self.win != None:
+                display(self.win, pos, True)
+                displayinfo(self.win, 7, 34, '▶')
+                displayinfo(self.win, 11, 34, ' ')
+        else:
+            self.status[pos] = -1
+            if self.win != None:
+                display(self.win, pos, False)
+                displayinfo(self.win, 7, 34, ' ')
+                displayinfo(self.win, 11, 34, '▶')
+
         if self.gameover(pos):
             # deal with gameover situation
             pass
@@ -143,17 +175,50 @@ class board(object):
 
 
 class agent(object):
+    def __init__(self, chessboard, loadmodel=False, path=None, eval=False):
+        self.board = chessboard
+        self.model=None
+        if loadmodel:
+            self.model = torch.load(path)
+        else:
+            self.model = Net()
+        if eval:
+            self.model.eval()
+        self.x = None
+        self.free = []
+        self.optimizer = torch.optim.Adam(self.model.parameters())
+        #self.model.eval()
+
+    def policy(self):
+        return nnpolicy(self)
+    
+    def update(self):
+        self.optimizer.zero_grad()
+        out = self.model.forward(self.x)
+        loss = F.nll_loss(out, torch.tensor([self.board.steps[-1]]))
+        loss.backward()
+        self.optimizer.step()
+
+    def save(self, path):
+        torch.save(self.model, path)
+
+class randagent(object):
     def __init__(self, chessboard):
         self.board = chessboard
-
     def policy(self):
         return randpolicy(self)
 
 
-def randpolicy(AGENT):
+def randpolicy(Agent):
     while True:
         out = random.randint(0, 224)
-        if out in AGENT.board.steps:
+        if out in Agent.board.steps:
             continue
         else:
             return out
+
+def nnpolicy(Agent):
+    Agent.x = Agent.board.status
+    Agent.free = [int(x) for x in range(225) if x not in Agent.board.steps]
+    out = Agent.model.forward(Agent.x)
+    return Agent.free[torch.argmax(out[0][Agent.free])]

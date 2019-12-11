@@ -32,8 +32,8 @@ def display(pos, player):
 
 def main():
     board = chb.board(win)
-    playerA = chb.agent(board)
-    playerB = chb.agent(board)
+    playerA = chb.agent(board, loadmodel=True, path='./NETA.pt', eval=True)
+    playerB = chb.randagent(board)
 
     # Loop
     while True:
@@ -46,10 +46,9 @@ def main():
             time.sleep(0.1)
             continue
         else:
-            win.getstr()
             break
-
 
 if __name__ == "__main__":
     main()
+    win.getstr()
     terminateCrs()
