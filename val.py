@@ -2,6 +2,8 @@ import curses
 import modules as chb
 import time
 
+aifirst = True
+
 # ● ◯
 
 stdscr = curses.initscr()
@@ -32,29 +34,37 @@ def display(pos, player):
 
 def main():
     board = chb.board(win)
-    playerA = chb.agent(board, loadmodel=True, path='./NETA.pt', eval=True)
-    playerB = chb.randagent(board)
+    if aifirst:
+        FirstHand = chb.agent(board, loadmodel=True,
+                              path='./NETA.pt', eval=True)
+        #LatterHand = chb.simpleagent(board)
+        LatterHand = chb.agent(board, loadmodel=True,
+                               path='./NETB.pt', eval=True)
+    else:
+        FirstHand = chb.simpleagent(board)
+        LatterHand = chb.agent(board, loadmodel=True,
+                               path='./NETB.pt', eval=True)
 
     # Loop
     countwin = 0
     i = 0
     while True:
         # Judge whose turn
-        player = playerA if board.turn else playerB
+        player = FirstHand if board.turn else LatterHand
         # policy determine
         step = player.policy()
         # put chessman
         if board.put(step):
-            #time.sleep(0.1)
+            time.sleep(0.5)
             continue
         else:
             i += 1
-            if board.countsteps % 2 != 0:
+            if (board.countsteps % 2 != 0) == (aifirst):
                 countwin += 1
             board.reset()
             win.addstr(1, 4, ('Round:%4d AI:%4.2f%%' % (i, countwin/i*100)))
             win.refresh()
-        if i == 3000:
+        if i == 5:
             break
 
     '''
@@ -72,6 +82,7 @@ def main():
         else:
             break
     '''
+
 
 if __name__ == "__main__":
     main()

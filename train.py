@@ -9,7 +9,10 @@ def main():
     board = chb.board()
     playerA = chb.agent(board)
     playerB = chb.agent(board)
-    #playerB = chb.randagent(board)
+    #playerB = chb.simpleagent(board)
+
+    #playerA = chb.agent(board,loadmodel=True, path='./NETA.pt')
+    #playerB = chb.agent(board,loadmodel=True, path='./NETB.pt')
 
     # Loop
     i = 0
@@ -24,7 +27,7 @@ def main():
             continue
         else:
             i += 1
-            if(board.countsteps % 2 == 0):
+            if(board.countsteps % 2 != 0):
                 countwin += 1
             print("\rStep|Winrate %d|%.2f%%" % (i, countwin/i*100), end='')
             playerA.update()
@@ -33,8 +36,9 @@ def main():
         if i % 100 == 0:
             playerA.save('./NETA.pt')
             playerB.save('./NETB.pt')
-        if i == 20000:
+        if i == 2000:
             break
+    print("")
 
 
 if __name__ == "__main__":

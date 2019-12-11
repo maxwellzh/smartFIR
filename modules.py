@@ -5,6 +5,7 @@ import torchvision
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
@@ -27,6 +28,7 @@ class Net(nn.Module):
         x = self.fc1(torch.flatten(x, 1))
         output = F.log_softmax(x, dim=1)
         return output
+
 
 def getPos(pos):
     if pos < 0 or pos > 224:
@@ -136,7 +138,7 @@ class board(object):
                 displayinfo(self.win, 0, 6, "Black player wins!")
             else:
                 displayinfo(self.win, 0, 6, "White player wins!")
-        
+
         return True
 
     def put(self, pos):
@@ -148,7 +150,7 @@ class board(object):
 
         if self.win != None:
             displayinfo(self.win, 9, 36, ('[%2d,%2d]' %
-                                        (getPos(pos)[0], getPos(pos)[1])))
+                                          (getPos(pos)[0], getPos(pos)[1])))
         self.turn = not self.turn
         self.steps.append(pos)
         self.countsteps += 1
@@ -177,7 +179,7 @@ class board(object):
 class agent(object):
     def __init__(self, chessboard, loadmodel=False, path=None, eval=False):
         self.board = chessboard
-        self.model=None
+        self.model = None
         if loadmodel:
             self.model = torch.load(path)
         else:
@@ -191,7 +193,7 @@ class agent(object):
 
     def policy(self):
         return nnpolicy(self)
-    
+
     def update(self):
         self.optimizer.zero_grad()
         out = self.model.forward(self.x)
@@ -202,11 +204,13 @@ class agent(object):
     def save(self, path):
         torch.save(self.model, path)
 
-class randagent(object):
+
+class simpleagent(object):
     def __init__(self, chessboard):
         self.board = chessboard
+
     def policy(self):
-        return randpolicy(self)
+        return serialpolicy(self)
 
 
 def randpolicy(Agent):
@@ -217,8 +221,18 @@ def randpolicy(Agent):
         else:
             return out
 
+
 def nnpolicy(Agent):
     Agent.x = Agent.board.status
     Agent.free = [int(x) for x in range(225) if x not in Agent.board.steps]
     out = Agent.model.forward(Agent.x)
     return Agent.free[torch.argmax(out[0][Agent.free])]
+
+
+def serialpolicy(Agent):
+    out = 0
+    for i in range(225):
+        if i not in Agent.board.steps:
+            out = i
+            break
+    return out
