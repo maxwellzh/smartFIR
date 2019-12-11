@@ -1,5 +1,5 @@
 import curses
-import chessboard as chb
+import modules as chb
 import time
 
 # ● ◯
@@ -9,7 +9,7 @@ curses.cbreak()
 stdscr.keypad(True)
 curses.noecho()
 
-win = curses.newwin(15, 30, 1, 0)
+win = curses.newwin(17, 44, 1, 0)
 
 
 def terminateCrs():
@@ -32,9 +32,24 @@ def display(pos, player):
 
 def main():
     board = chb.board(win)
-    board.put(110, True)
-    win.getstr()
-    terminateCrs()
+    playerA = chb.agent(board)
+    playerB = chb.agent(board)
+
+    # Loop
+    while True:
+        # Judge whose turn
+        player = playerA if board.turn else playerB
+        # policy determine
+        step = player.policy()
+        # put chessman
+        if board.put(step):
+            time.sleep(0.1)
+            continue
+        else:
+            win.getstr()
+            break
+
 
 if __name__ == "__main__":
     main()
+    terminateCrs()
