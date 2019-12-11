@@ -36,6 +36,8 @@ def main():
     playerB = chb.randagent(board)
 
     # Loop
+    countwin = 0
+    i = 0
     while True:
         # Judge whose turn
         player = playerA if board.turn else playerB
@@ -43,10 +45,33 @@ def main():
         step = player.policy()
         # put chessman
         if board.put(step):
-            time.sleep(0.1)
+            #time.sleep(0.1)
+            continue
+        else:
+            i += 1
+            if board.countsteps % 2 != 0:
+                countwin += 1
+            board.reset()
+            win.addstr(1, 4, ('Round:%4d AI:%4.2f%%' % (i, countwin/i*100)))
+            win.refresh()
+        if i == 3000:
+            break
+
+    '''
+    while True:
+        # Judge whose turn
+        player = playerA if board.turn else playerB
+        win.addstr(1, 0, str(type(player)))
+        win.refresh()
+        # policy determine
+        step = player.policy()
+        # put chessman
+        if board.put(step):
+            time.sleep(0.3)
             continue
         else:
             break
+    '''
 
 if __name__ == "__main__":
     main()

@@ -154,15 +154,15 @@ class board(object):
         self.countsteps += 1
 
         if self.countsteps % 2 == 0:
-            self.status[pos] = 1
-            if self.win != None:
-                display(self.win, pos, True)
-                displayinfo(self.win, 7, 34, '▶')
-                displayinfo(self.win, 11, 34, ' ')
-        else:
             self.status[pos] = -1
             if self.win != None:
                 display(self.win, pos, False)
+                displayinfo(self.win, 7, 34, '▶')
+                displayinfo(self.win, 11, 34, ' ')
+        else:
+            self.status[pos] = 1
+            if self.win != None:
+                display(self.win, pos, True)
                 displayinfo(self.win, 7, 34, ' ')
                 displayinfo(self.win, 11, 34, '▶')
 

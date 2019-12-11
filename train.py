@@ -30,10 +30,10 @@ def main():
             playerA.update()
             playerB.update()
             board.reset()
-        if i % 50 == 0:
+        if i % 100 == 0:
             playerA.save('./NETA.pt')
-            #playerB.save('./NETB.pt')
-        if i == 1000:
+            playerB.save('./NETB.pt')
+        if i == 20000:
             break
 
 
