@@ -3,7 +3,7 @@ import modules as chb
 import time
 
 # ● ◯
-
+alterupdate = True
 
 def main():
     board = chb.Board()
@@ -42,6 +42,7 @@ def main():
             # playerB.save('./NETB.pt')
         if i == 1000:
             break
+    print("")
 
 
 if __name__ == "__main__":

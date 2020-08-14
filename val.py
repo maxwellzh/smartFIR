@@ -3,6 +3,8 @@ import modules as chb
 import time
 import random
 
+aifirst = True
+
 # ● ◯
 
 stdscr = curses.initscr()
@@ -38,9 +40,11 @@ def main():
     playerB = chb.randagent(board)
 
     # Loop
+    countwin = 0
+    i = 0
     while True:
         # Judge whose turn
-        player = playerA if board.turn else playerB
+        player = FirstHand if board.turn else LatterHand
         # policy determine
         step = player.policy()
         # put chessman
@@ -48,7 +52,31 @@ def main():
             time.sleep(0.1)
             continue
         else:
+            i += 1
+            if (board.countsteps % 2 != 0) == (aifirst):
+                countwin += 1
+            board.reset()
+            win.addstr(1, 4, ('Round:%4d AI:%4.2f%%' % (i, countwin/i*100)))
+            win.refresh()
+        if i == 10:
             break
+
+    '''
+    while True:
+        # Judge whose turn
+        player = playerA if board.turn else playerB
+        win.addstr(1, 0, str(type(player)))
+        win.refresh()
+        # policy determine
+        step = player.policy()
+        # put chessman
+        if board.put(step):
+            time.sleep(0.3)
+            continue
+        else:
+            break
+    '''
+
 
 if __name__ == "__main__":
     random.seed(time.time())
