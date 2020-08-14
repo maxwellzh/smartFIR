@@ -201,9 +201,10 @@ class Board(object):
 
 
 class Agent(object):
-    def __init__(self, chessboard, loadmodel=False, path=None, eval=False):
+    def __init__(self, chessboard, mode='A', loadmodel=False, path=None, eval=False):
         self.board = chessboard
         self.model = None
+        self.MODE = mode
         if loadmodel:
             self.model = torch.load(path)
         else:
@@ -221,14 +222,19 @@ class Agent(object):
         return nnpolicy(self)
 
     def update(self):
-        # if enemy_step is None:
-        #     enemy_step = 112
-        # loss = F.nll_loss(self.step, torch.tensor([enemy_step]))
-        # loss = F.cross_entropy(self.step, ValuesJudge(self.board))
-        # loss.backward()
-        # self.optimizer.step()
-        # self.optimizer.zero_grad()
-        pass
+        if self.MODE == 'A':
+            self.lastvalue = ValuesJudge(self.board, self.lastvalue)
+            loss = F.mse_loss(self.step, self.lastvalue)
+            loss.backward()
+            self.optimizer.step()
+            self.optimizer.zero_grad()
+        else:
+            if self.step is None:
+                return
+            loss = F.nll_loss(self.step, torch.tensor([self.board.steps[-2]]))
+            loss.backward()
+            self.optimizer.step()
+            self.optimizer.zero_grad()
 
     def reset(self):
         self.lastvalue = None
@@ -274,12 +280,6 @@ def nnpolicy(agent: Agent):
     free = [int(x) for x in range(225) if x not in agent.board.steps]
     agent.step, agent.h, agent.c = agent.model.forward(
         agent.board.status, agent.h, agent.c)
-
-    agent.lastvalue = ValuesJudge(agent.board, agent.lastvalue)
-    loss = F.mse_loss(agent.step, agent.lastvalue)
-    loss.backward()
-    agent.optimizer.step()
-    agent.optimizer.zero_grad()
 
     return free[torch.argmax(agent.step[0][free])]
 

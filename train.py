@@ -8,7 +8,7 @@ alterupdate = True
 def main():
     board = chb.Board()
     playerA = chb.Agent(board)
-    playerB = chb.Agent(board)
+    playerB = chb.Agent(board, mode='B')
     # playerB = chb.randagent(board)
 
     # Loop
@@ -24,10 +24,14 @@ def main():
 
         # put chessman
         if board.put(step):
+            if not board.turn:
+                # print("update A")
+                playerA.update()
+            else:
+                # print("update B")
+                playerB.update()
             continue
         else:
-            playerA.update()
-            playerB.update()
             i += 1
             if not board.turn:
                 countwin += 1
@@ -37,9 +41,9 @@ def main():
             playerB.reset()
             runstep = 0
 
-        if i % 100 == 0:
+        if i % 10 == 0:
             playerA.save('./NETA.pt')
-            # playerB.save('./NETB.pt')
+            playerB.save('./NETB.pt')
         if i == 1000:
             break
     print("")

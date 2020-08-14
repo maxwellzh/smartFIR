@@ -36,15 +36,15 @@ def display(pos, player):
 def main():
     board = chb.Board(win)
     playerA = chb.Agent(board, loadmodel=True, path='./NETA.pt', eval=True)
-    # playerB = chb.Agent(board, loadmodel=True, path='./NETB.pt', eval=True)
-    playerB = chb.randagent(board)
+    playerB = chb.Agent(board, loadmodel=True, path='./NETB.pt', eval=True)
+    # playerB = chb.randagent(board)
 
     # Loop
     countwin = 0
     i = 0
     while True:
         # Judge whose turn
-        player = FirstHand if board.turn else LatterHand
+        player = playerA if board.turn else playerB
         # policy determine
         step = player.policy()
         # put chessman
@@ -53,7 +53,7 @@ def main():
             continue
         else:
             i += 1
-            if (board.countsteps % 2 != 0) == (aifirst):
+            if not board.turn:
                 countwin += 1
             board.reset()
             win.addstr(1, 4, ('Round:%4d AI:%4.2f%%' % (i, countwin/i*100)))
